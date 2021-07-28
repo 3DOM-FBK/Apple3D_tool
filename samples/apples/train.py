@@ -7,7 +7,7 @@ from PIL import Image, ImageDraw
 import skimage
 
 # Set the ROOT_DIR variable to the root directory of the Mask_RCNN git repo
-ROOT_DIR = os.path.abspath("../")
+ROOT_DIR = os.path.abspath("../../")
 assert os.path.exists(ROOT_DIR), 'ROOT_DIR does not exist. Did you forget to read the instructions above? ;)'
 
 # Import mrcnn libraries
@@ -159,63 +159,71 @@ class CocoLikeDataset(utils.Dataset):
 
 if __name__ == "__main__":
 
-    # Download COCO trained weights from Releases if needed
-    if not os.path.exists(COCO_MODEL_PATH):
-        utils.download_trained_weights(COCO_MODEL_PATH)
-    
-    config = MeleConfig()
-    config.display()
+    if len(sys.argv) == 3:
 
-    train_json = sys.argv[1]
-    train_images = os.path.join(os.path.dirname(train_json), "images")
-    print(train_json)
-    print(train_images)
+        # Download COCO trained weights from Releases if needed
+        if not os.path.exists(COCO_MODEL_PATH):
+            utils.download_trained_weights(COCO_MODEL_PATH)
+        
+        config = MeleConfig()
+        config.display()
 
-    dataset_train = CocoLikeDataset()
-    dataset_train.load_data(os.path.join(ROOT_DIR, train_json), os.path.join(ROOT_DIR, train_images))
-    dataset_train.prepare()
+        train_json = sys.argv[1]
+        train_images = os.path.join(os.path.dirname(train_json), "images")
+        print(train_json)
+        print(train_images)
 
-    val_json = sys.argv[2]
-    val_images = os.path.join(os.path.dirname(val_json), "images")
-    print(val_json)
-    print(val_images)
+        dataset_train = CocoLikeDataset()
+        dataset_train.load_data(os.path.join(ROOT_DIR, train_json), os.path.join(ROOT_DIR, train_images))
+        dataset_train.prepare()
 
-    dataset_val = CocoLikeDataset()
-    dataset_val.load_data(os.path.join(ROOT_DIR, val_json), os.path.join(ROOT_DIR, val_images))
-    dataset_val.prepare()
+        val_json = sys.argv[2]
+        val_images = os.path.join(os.path.dirname(val_json), "images")
+        print(val_json)
+        print(val_images)
 
-    dataset = dataset_train
-    image_ids = np.random.choice(dataset.image_ids, 4)
-    for image_id in image_ids:
-        image = dataset.load_image(image_id)
-        mask, class_ids = dataset.load_mask(image_id)
-        visualize.display_top_masks(image, mask, class_ids, dataset.class_names)
+        dataset_val = CocoLikeDataset()
+        dataset_val.load_data(os.path.join(ROOT_DIR, val_json), os.path.join(ROOT_DIR, val_images))
+        dataset_val.prepare()
 
-    # Create model in training mode
-    model = modellib.MaskRCNN(mode="training", config=config, model_dir=MODEL_DIR)
+        dataset = dataset_train
+        image_ids = np.random.choice(dataset.image_ids, 4)
+        for image_id in image_ids:
+            image = dataset.load_image(image_id)
+            mask, class_ids = dataset.load_mask(image_id)
+            visualize.display_top_masks(image, mask, class_ids, dataset.class_names)
 
-    # Which weights to start with?
-    init_with = "coco"  # imagenet, coco, or last
+        # Create model in training mode
+        model = modellib.MaskRCNN(mode="training", config=config, model_dir=MODEL_DIR)
 
-    if init_with == "imagenet":
-        model.load_weights(model.get_imagenet_weights(), by_name=True)
-    elif init_with == "coco":
-        # Load weights trained on MS COCO, but skip layers that
-        # are different due to the different number of classes
-        # See README for instructions to download the COCO weights
-        model.load_weights(COCO_MODEL_PATH, by_name=True,
-                           exclude=["mrcnn_class_logits", "mrcnn_bbox_fc", 
-                                    "mrcnn_bbox", "mrcnn_mask"])
-    elif init_with == "last":
-        # Load the last model you trained and continue training
-        model.load_weights(model.find_last(), by_name=True)
+        # Which weights to start with?
+        init_with = "coco"  # imagenet, coco, or last
 
-    # Train the head branches
-    # Passing layers="heads" freezes all layers except the head
-    # layers. You can also pass a regular expression to select
-    # which layers to train by name pattern.
-    start_train = time.time()
-    model.train(dataset_train, dataset_val, learning_rate=config.LEARNING_RATE, epochs=4, layers='heads')
-    end_train = time.time()
-    minutes = round((end_train - start_train) / 60, 2)
-    print(f'Training took {minutes} minutes')
+        if init_with == "imagenet":
+            model.load_weights(model.get_imagenet_weights(), by_name=True)
+        elif init_with == "coco":
+            # Load weights trained on MS COCO, but skip layers that
+            # are different due to the different number of classes
+            # See README for instructions to download the COCO weights
+            model.load_weights(COCO_MODEL_PATH, by_name=True,
+                            exclude=["mrcnn_class_logits", "mrcnn_bbox_fc", 
+                                        "mrcnn_bbox", "mrcnn_mask"])
+        elif init_with == "last":
+            # Load the last model you trained and continue training
+            model.load_weights(model.find_last(), by_name=True)
+
+        # Train the head branches
+        # Passing layers="heads" freezes all layers except the head
+        # layers. You can also pass a regular expression to select
+        # which layers to train by name pattern.
+        start_train = time.time()
+        model.train(dataset_train, dataset_val, learning_rate=config.LEARNING_RATE, epochs=4, layers='heads')
+        end_train = time.time()
+        minutes = round((end_train - start_train) / 60, 2)
+        print(f'Training took {minutes} minutes')
+
+    else:
+        print("Usage: python train.py <training_data_folder> <validation_data_folder>\n")
+        print("  <training_data_folder> folder containing the annotations.json and the images folder for the training\n")
+        print("  <training_data_folder> folder containing the annotations.json and the images folder for the validation\n\n")
+        print("Remember to set the correct ROOT_DIR folder in train.py file.")

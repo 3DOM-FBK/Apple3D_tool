@@ -47,56 +47,67 @@ class InferenceConfig(MeleConfig):
 
 if __name__ == "__main__":
 
-    model_directory = sys.argv[1]
-    images_folder = sys.argv[2]
-    output_folder = sys.argv[3]
+    display = False
 
-    inference_config = InferenceConfig()
+    if len(sys.argv) >= 4:
+        model_directory = sys.argv[1]
+        images_folder = sys.argv[2]
+        output_folder = sys.argv[3]
 
-    # Recreate the model in inference mode
-    model = modellib.MaskRCNN(mode="inference", config=inference_config, model_dir=model_directory)    
+        if len(sys.argv) == 5:
+            display = sys.argv[4] == "1"
 
-    print("Loading weights...")
-    # model.load_weights(model.find_last(), by_name=True)
-    model.load_weights(model.find_last(), by_name=True)
+        inference_config = InferenceConfig()
 
-    image_paths = []
+        # Recreate the model in inference mode
+        model = modellib.MaskRCNN(mode="inference", config=inference_config, model_dir=model_directory)    
 
-    segmentation = {}
+        print("Loading weights...")
+        # model.load_weights(model.find_last(), by_name=True)
+        model.load_weights(model.find_last(), by_name=True)
 
-    for filename in os.listdir(images_folder):
+        image_paths = []
 
-        if os.path.splitext(filename)[1].lower() in ['.png', '.jpg', '.jpeg']:
-        
-            image_path = os.path.join(images_folder, filename)
+        segmentation = {}
 
-            img = skimage.io.imread(image_path)
-            img_arr = np.array(img)
-            results = model.detect([img_arr], verbose=1)
-            r = results[0]
+        for filename in os.listdir(images_folder):
+
+            if os.path.splitext(filename)[1].lower() in ['.png', '.jpg', '.jpeg']:
             
-            # print(filename)
+                image_path = os.path.join(images_folder, filename)
 
-            masked_image = np.zeros(np.shape(img))
-            #masked_image = img.astype(np.uint32).copy()
+                img = skimage.io.imread(image_path)
+                img_arr = np.array(img)
+                results = model.detect([img_arr], verbose=1)
+                r = results[0]
+                
+                # print(filename)
 
-            regions = []            
+                masked_image = np.zeros(np.shape(img))
+                #masked_image = img.astype(np.uint32).copy()
 
-            for roi in r['rois']:
-                regions.append({"roi" : roi.tolist()})
+                regions = []            
 
-            for i in range(len(r['rois'])):
-                mask = r['masks'][:, :, i]
-                for c in range(3):
-                    masked_image[:, :, c] = np.where(mask == 1,
-                                        255,
-                                        masked_image[:, :, c])
-                            
-            cv2.imwrite(os.path.join(output_folder, filename), masked_image.astype(np.uint8))
-        
-            #visualize.display_instances(img, r['rois'], r['masks'], r['class_ids'], ['BG', 'mela'], r['scores'], figsize=(5,5))
-            segmentation[filename] = regions            
+                for roi in r['rois']:
+                    regions.append({"roi" : roi.tolist()})
 
-    with open(os.path.join(output_folder, "segmentation.json"), 'w') as f:
-        json.dump(segmentation, f, ensure_ascii=False)
+                for i in range(len(r['rois'])):
+                    mask = r['masks'][:, :, i]
+                    for c in range(3):
+                        masked_image[:, :, c] = np.where(mask == 1,
+                                            255,
+                                            masked_image[:, :, c])
+                                
+                cv2.imwrite(os.path.join(output_folder, filename), masked_image.astype(np.uint8))
+            
+                print(display)
+                if display:
+                    visualize.display_instances(img, r['rois'], r['masks'], r['class_ids'], ['BG', 'mela'], r['scores'], figsize=(5,5))
 
+                segmentation[filename] = regions            
+
+        with open(os.path.join(output_folder, "segmentation.json"), 'w') as f:
+            json.dump(segmentation, f, ensure_ascii=False)
+
+    else:
+        print("Usage: python detect.py <weights_directory> <images_folder> <output_folder>")
