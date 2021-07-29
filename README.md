@@ -33,7 +33,9 @@ python Apple3D_tool/smart_frame_extraction.py -v <file name or full path of the 
 ## Apple segmentation and mask generation
 
 Install [Mask RCNN](https://github.com/matterport/Mask_RCNN/)
+
 Download our [pre-trained weights](https://drive.google.com/drive/folders/1OxWQpDw7nDMTmkihV0wB496Fi7JEPAV-)
+
 Run the script:
 
 ```
