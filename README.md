@@ -19,13 +19,13 @@ To extract the frames from a video use:
 python Apple3D_tool/smart_frame_extraction.py -v <file name or full path of the video> --out <output path folder> -s <sharpness threshold> -m <min step between frames> -M <max step between frames>
 ```
 
-3.	Apples segmentation/masks generation: a pre-trained neural network model is used for apple’s instance segmentation on keyframes. This is an example showing the use of [Mask R-CNN](https://github.com/matterport/Mask_RCNN) in a real world application. We train a model to detect apples on a tree and we then use the generated masks to facilitate the generation of a dense point cloud of these apples. Starting from the pre-trained weights from the [COCO](https://cocodataset.org/) dataset, a total of about [700 apple instances](https://drive.google.com/drive/folders/13DtJs90koMDqSBHWGVMPKiMnODfly9mW?usp=sharing) has been manually labelled and used for an additional training in order to increase the neural network’s performance
+3.	Apples segmentation/ 4. masks generation: a pre-trained neural network model is used for apple’s instance segmentation on keyframes. This is an example showing the use of [Mask R-CNN](https://github.com/matterport/Mask_RCNN) in a real world application. We train a model to detect apples on a tree and we then use the generated masks to facilitate the generation of a dense point cloud of these apples. Starting from the pre-trained weights from the [COCO](https://cocodataset.org/) dataset, a total of about [700 apple instances](https://drive.google.com/drive/folders/13DtJs90koMDqSBHWGVMPKiMnODfly9mW?usp=sharing) has been manually labelled and used for an additional training in order to increase the neural network’s performance
 
-4.	Image orientation: the extracted keyframes are used for photogrammetric reconstruction purposes, starting from camera pose estimation and sparse point cloud generation
+5.	Image orientation: the extracted keyframes are used for photogrammetric reconstruction purposes, starting from camera pose estimation and sparse point cloud generation
 
-5.	Dense image matching: using the previously created masks within an MVS (Multi-View Stereo) process
+6.	Dense image matching: using the previously created masks within an MVS (Multi-View Stereo) process
 
-6.	Apple size measurement: size and number of fruits are derived by fitting spheres to the photogrammetric point cloud (using a RANSAC algorithm)
+7.	Apple size measurement: size and number of fruits are derived by fitting spheres to the photogrammetric point cloud (using a RANSAC algorithm)
 
 ![Apple3D main steps](/assets/APPLE3D_STEPS.png)
 
